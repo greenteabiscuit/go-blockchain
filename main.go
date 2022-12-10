@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -37,6 +38,20 @@ func (b *Blockchain) LastBlock() *Block {
 	return b.Chain[len(b.Chain)-1]
 }
 
+// ProofOfWork Simple Proof of Work Algorithm:
+//   - Find a number p' such that hash(pp') contains leading 4 zeroes, where p is the previous p'
+//   - p is the previous proof, and p' is the new proof
+func (b *Blockchain) ProofOfWork(lastProof int) int {
+	proof := 0
+	for {
+		if ValidProof(lastProof, proof) {
+			break
+		}
+		proof += 1
+	}
+	return proof
+}
+
 // Hash creates a SHA-256 hash of a block
 func Hash(block Block) string {
 	blockString, err := json.Marshal(block)
@@ -47,6 +62,13 @@ func Hash(block Block) string {
 	binarySha256 := sha256.Sum256(blockString)
 
 	return hex.EncodeToString(binarySha256[:])
+}
+
+// ValidProof Validates the Proof: Does hash(last_proof, proof) contain 4 leading zeroes?
+func ValidProof(lastProof, proof int) bool {
+	guess := fmt.Sprintf("%d%d", lastProof, proof)
+	guessHash := sha256.Sum256([]byte(guess))
+	return string(guessHash[:4]) == "0000"
 }
 
 type Block struct {
