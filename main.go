@@ -39,7 +39,7 @@ func (b *Blockchain) RegisterNodes(addr string) {
 	if err != nil {
 		panic(err)
 	}
-	b.Nodes["addr"] = struct{}{}
+	b.Nodes[addr] = struct{}{}
 }
 
 // ValidChain Determine if a given blockchain is valid
@@ -62,6 +62,47 @@ func (b *Blockchain) ValidChain(chain []*Block) bool {
 	}
 
 	return true
+}
+
+type NodeResponse struct {
+	Length int
+	Chain  []*Block
+}
+
+// ResolveConflicts
+// This is our Consensus Algorithm, it resolves conflicts
+// by replacing our chain with the longest one in the network.
+func (b *Blockchain) ResolveConflicts() bool {
+	var newChain []*Block
+	neighbors := b.Nodes
+
+	// We're only looking for chains longer than ours
+	maxLength := len(b.Chain)
+
+	for key, _ := range neighbors {
+		var respdata NodeResponse
+		conn, err := net.Dial("tcp", fmt.Sprintf("http://%s/chain", key))
+		if err != nil {
+			panic(err)
+		}
+		data := make([]byte, 1024)
+		count, _ := conn.Read(data)
+		fmt.Println(string(data[:count]))
+		json.Unmarshal(data, &respdata)
+		fmt.Println(respdata)
+
+		if respdata.Length > maxLength && b.ValidChain(respdata.Chain) {
+			maxLength = respdata.Length
+			newChain = respdata.Chain
+		}
+	}
+
+	if len(newChain) > 0 {
+		b.Chain = newChain
+		return true
+	}
+
+	return false
 }
 
 // NewBlock Adds a new block and adds it to the chain
@@ -170,10 +211,29 @@ func (b *Blockchain) FullChainHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf("length %d\nchain: %v\n", len(b.Chain), b.Chain)))
 }
 
+type RegisterNodeResponse struct {
+	Node string
+}
+
+func (b *Blockchain) RegisterNodeHandler(w http.ResponseWriter, r *http.Request) {
+	var resp RegisterNodeResponse
+	data, error := io.ReadAll(r.Body)
+	if error != nil {
+		w.Write([]byte("readall error\n"))
+		return
+	}
+
+	json.Unmarshal(data, &resp)
+
+	b.RegisterNodes(resp.Node)
+	w.Write([]byte(fmt.Sprintf("New nodes have been added. Total nodes: %v\n", b.Nodes)))
+}
+
 func main() {
 	blockChain := NewBlockchain()
 	http.HandleFunc("/mine", blockChain.MineHandler)
 	http.HandleFunc("/transactions/new", blockChain.NewTransactionHandler)
 	http.HandleFunc("/chain", blockChain.FullChainHandler)
+	http.HandleFunc("/nodes/register", blockChain.RegisterNodeHandler)
 	http.ListenAndServe(":8080", nil)
 }
