@@ -16,7 +16,28 @@ func TestBlockchain_LastBlock(t *testing.T) {
 		fields fields
 		want   *Block
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			fields: fields{
+				Chain: []*Block{
+					{
+						Index:        1,
+						Timestamp:    time.Now().Unix(), // TODO: this test needs fixing
+						Transactions: nil,
+						Proof:        1,
+						PreviousHash: "exampleHash",
+					},
+				},
+				CurrentTransactions: nil,
+			},
+			want: &Block{
+				Index:        1,
+				Timestamp:    time.Now().Unix(), // TODO: this test needs fixing
+				Transactions: nil,
+				Proof:        1,
+				PreviousHash: "exampleHash",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -119,7 +140,27 @@ func TestBlockchain_NewTransaction(t *testing.T) {
 		args   args
 		want   int
 	}{
-		// TODO: Add test cases.
+		{
+			name: "adding first transaction: success",
+			fields: fields{
+				Chain: []*Block{
+					{
+						Index:        1,
+						Timestamp:    time.Now().Unix(), // TODO: this test needs fixing
+						Transactions: nil,
+						Proof:        1,
+						PreviousHash: "exampleHash",
+					},
+				},
+				CurrentTransactions: nil,
+			},
+			args: args{
+				sender:    "exampleSender",
+				recipient: "exampleRecipient",
+				amount:    100,
+			},
+			want: 1,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
