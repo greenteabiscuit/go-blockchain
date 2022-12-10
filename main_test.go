@@ -246,10 +246,10 @@ func TestHash(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want []byte
+		want string
 	}{
 		{
-			name: "success, when block is nil",
+			name: "success",
 			args: args{block: Block{
 				Index:        0,
 				Timestamp:    0,
@@ -257,12 +257,12 @@ func TestHash(t *testing.T) {
 				Proof:        0,
 				PreviousHash: "",
 			}},
-			want: []byte{49, 152, 133, 160, 103, 111, 24, 28, 104, 155, 146, 98, 31, 211, 70, 192, 119, 130, 105, 216, 54, 41, 249, 238, 41, 32, 11, 199, 247, 122, 146, 107},
+			want: "319885a0676f181c689b92621fd346c0778269d83629f9ee29200bc7f77a926b",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := Hash(tt.args.block); !reflect.DeepEqual(got, tt.want) {
+			if got := Hash(tt.args.block); got != tt.want {
 				t.Errorf("Hash() = %v, want %v", got, tt.want)
 			}
 		})

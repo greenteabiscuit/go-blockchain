@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"time"
 )
@@ -37,15 +38,15 @@ func (b *Blockchain) LastBlock() *Block {
 }
 
 // Hash creates a SHA-256 hash of a block
-func Hash(block Block) []byte {
+func Hash(block Block) string {
 	blockString, err := json.Marshal(block)
 	if err != nil {
-		return []byte{}
+		return ""
 	}
 
 	binarySha256 := sha256.Sum256(blockString)
 
-	return binarySha256[:]
+	return hex.EncodeToString(binarySha256[:])
 }
 
 type Block struct {
