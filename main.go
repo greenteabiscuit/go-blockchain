@@ -85,7 +85,8 @@ func Hash(block Block) string {
 func ValidProof(lastProof, proof int) bool {
 	guess := fmt.Sprintf("%d%d", lastProof, proof)
 	guessHash := sha256.Sum256([]byte(guess))
-	return string(guessHash[:4]) == "0000"
+	guessHex := hex.EncodeToString(guessHash[:])
+	return string(guessHex[:4]) == "0000"
 }
 
 type Block struct {
@@ -102,8 +103,19 @@ type Transaction struct {
 	Amount    int
 }
 
-func (b *Blockchain) MineHandlerHandler(w http.ResponseWriter, r *http.Request) {
+func (b *Blockchain) MineHandler(w http.ResponseWriter, r *http.Request) {
+	lastBlock := b.LastBlock()
+	lastProof := lastBlock.Proof
+	proof := b.ProofOfWork(lastProof)
 
+	// We must receive a reward for finding the proof.
+	//The sender is "0" to signify that this node has mined a new coin.
+
+	b.NewTransaction("0", "NodeIdentifier", 1)
+	previousHash := Hash(*lastBlock)
+	newBlock := b.NewBlock(proof, previousHash)
+	w.Write([]byte(fmt.Sprintf("New block forged, block index %d, transactions %v proof %d, previousHash %s \n",
+		newBlock.Index, newBlock.Transactions, newBlock.Proof, newBlock.PreviousHash)))
 }
 
 func (b *Blockchain) NewTransactionHandler(w http.ResponseWriter, r *http.Request) {
@@ -121,12 +133,12 @@ func (b *Blockchain) NewTransactionHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (b *Blockchain) FullChainHandler(w http.ResponseWriter, r *http.Request) {
-
+	w.Write([]byte(fmt.Sprintf("length %d\nchain: %v\n", len(b.Chain), b.Chain)))
 }
 
 func main() {
 	blockChain := NewBlockchain()
-	http.HandleFunc("/mine", blockChain.MineHandlerHandler)
+	http.HandleFunc("/mine", blockChain.MineHandler)
 	http.HandleFunc("/transactions/new", blockChain.NewTransactionHandler)
 	http.HandleFunc("/chain", blockChain.FullChainHandler)
 	http.ListenAndServe(":8080", nil)
