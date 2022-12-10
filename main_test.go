@@ -268,3 +268,49 @@ func TestHash(t *testing.T) {
 		})
 	}
 }
+
+func TestBlockchain_ValidChain(t *testing.T) {
+	successBlockChain := NewBlockchain()
+	for i := 0; i < 10; i++ {
+		lastBlock := successBlockChain.LastBlock()
+		lastProof := lastBlock.Proof
+		proof := successBlockChain.ProofOfWork(lastProof)
+
+		previousHash := Hash(*lastBlock)
+		successBlockChain.NewTransaction("0", "NodeIdentifier", 1)
+		successBlockChain.NewBlock(proof, previousHash)
+	}
+
+	type fields struct {
+		Chain               []*Block
+		CurrentTransactions []*Transaction
+		Nodes               map[string]struct{}
+	}
+	type args struct {
+		chain []*Block
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "success",
+			fields: fields{
+				Chain:               successBlockChain.Chain,
+				CurrentTransactions: successBlockChain.CurrentTransactions,
+				Nodes:               successBlockChain.Nodes,
+			},
+			args: args{chain: successBlockChain.Chain},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := successBlockChain.ValidChain(successBlockChain.Chain); got != tt.want {
+				t.Errorf("ValidChain() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

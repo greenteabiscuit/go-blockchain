@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"time"
 )
@@ -13,13 +14,14 @@ import (
 type Blockchain struct {
 	Chain               []*Block
 	CurrentTransactions []*Transaction
+	Nodes               map[string]struct{}
 }
 
 func NewBlockchain() *Blockchain {
 	return &Blockchain{
 		Chain: []*Block{
 			{
-				Index:        0,
+				Index:        1,
 				Timestamp:    0,
 				Transactions: nil,
 				Proof:        100,
@@ -27,7 +29,39 @@ func NewBlockchain() *Blockchain {
 			},
 		},
 		CurrentTransactions: nil,
+		Nodes:               make(map[string]struct{}),
 	}
+}
+
+// RegisterNodes Add a new node to the list of nodes
+func (b *Blockchain) RegisterNodes(addr string) {
+	_, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		panic(err)
+	}
+	b.Nodes["addr"] = struct{}{}
+}
+
+// ValidChain Determine if a given blockchain is valid
+func (b *Blockchain) ValidChain(chain []*Block) bool {
+	lastBlock := chain[0]
+	currentIndex := 1
+	for currentIndex < len(chain) {
+		block := chain[currentIndex]
+
+		// Check that the hash of the block is correct
+		if block.PreviousHash != Hash(*lastBlock) {
+			return false
+		}
+		// Check that the Proof of Work is correct
+		if !ValidProof(lastBlock.Proof, block.Proof) {
+			return false
+		}
+		lastBlock = block
+		currentIndex += 1
+	}
+
+	return true
 }
 
 // NewBlock Adds a new block and adds it to the chain
