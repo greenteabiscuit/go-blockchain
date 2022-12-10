@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -81,14 +82,29 @@ func (b *Blockchain) ResolveConflicts() bool {
 
 	for key, _ := range neighbors {
 		var respdata NodeResponse
-		conn, err := net.Dial("tcp", fmt.Sprintf("http://%s/chain", key))
+
+		url := fmt.Sprintf("http://%s/chain", key)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
-			panic(err)
+			fmt.Printf("client: could not create request: %s\n", err)
+			os.Exit(1)
 		}
-		data := make([]byte, 1024)
-		count, _ := conn.Read(data)
-		fmt.Println(string(data[:count]))
-		json.Unmarshal(data, &respdata)
+
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			fmt.Printf("client: error making http request: %s\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("client: status code: %d\n", res.StatusCode)
+
+		resBody, err := io.ReadAll(res.Body)
+		if err != nil {
+			fmt.Printf("client: could not read response body: %s\n", err)
+			os.Exit(1)
+		}
+
+		json.Unmarshal(resBody, &respdata)
 		fmt.Println(respdata)
 
 		if respdata.Length > maxLength && b.ValidChain(respdata.Chain) {
@@ -229,11 +245,24 @@ func (b *Blockchain) RegisterNodeHandler(w http.ResponseWriter, r *http.Request)
 	w.Write([]byte(fmt.Sprintf("New nodes have been added. Total nodes: %v\n", b.Nodes)))
 }
 
+func (b *Blockchain) ResolveHandler(w http.ResponseWriter, r *http.Request) {
+	replaced := b.ResolveConflicts()
+	if replaced {
+		w.Write([]byte(fmt.Sprintf("chain was replaced, %v\n", b.Chain)))
+		return
+	}
+	w.Write([]byte(fmt.Sprintf("our chain is authoritative %v\n", b.Chain)))
+}
+
 func main() {
+	port := os.Args[1] // :8080
+
 	blockChain := NewBlockchain()
 	http.HandleFunc("/mine", blockChain.MineHandler)
 	http.HandleFunc("/transactions/new", blockChain.NewTransactionHandler)
 	http.HandleFunc("/chain", blockChain.FullChainHandler)
 	http.HandleFunc("/nodes/register", blockChain.RegisterNodeHandler)
-	http.ListenAndServe(":8080", nil)
+	http.HandleFunc("/nodes/resolve", blockChain.ResolveHandler)
+	fmt.Printf("running on port %s\n", port)
+	http.ListenAndServe(port, nil)
 }
