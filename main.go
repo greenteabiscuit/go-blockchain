@@ -65,7 +65,7 @@ func (b *Blockchain) ValidChain(chain []*Block) bool {
 	return true
 }
 
-type NodeResponse struct {
+type ChainResponse struct {
 	Length int
 	Chain  []*Block
 }
@@ -81,7 +81,7 @@ func (b *Blockchain) ResolveConflicts() bool {
 	maxLength := len(b.Chain)
 
 	for key, _ := range neighbors {
-		var respdata NodeResponse
+		var respdata ChainResponse
 
 		url := fmt.Sprintf("http://%s/chain", key)
 		req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -224,7 +224,15 @@ func (b *Blockchain) NewTransactionHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (b *Blockchain) FullChainHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(fmt.Sprintf("length %d\nchain: %v\n", len(b.Chain), b.Chain)))
+	chainResp := &ChainResponse{
+		Length: len(b.Chain),
+		Chain:  b.Chain,
+	}
+	data, err := json.Marshal(chainResp)
+	if err != nil {
+		panic(err)
+	}
+	w.Write(data)
 }
 
 type RegisterNodeResponse struct {
@@ -264,5 +272,7 @@ func main() {
 	http.HandleFunc("/nodes/register", blockChain.RegisterNodeHandler)
 	http.HandleFunc("/nodes/resolve", blockChain.ResolveHandler)
 	fmt.Printf("running on port %s\n", port)
-	http.ListenAndServe(port, nil)
+	if err := http.ListenAndServe(port, nil); err != nil {
+		panic(err)
+	}
 }
