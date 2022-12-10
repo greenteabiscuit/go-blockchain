@@ -1,6 +1,10 @@
 package main
 
-import "time"
+import (
+	"crypto/sha256"
+	"encoding/json"
+	"time"
+)
 
 type Blockchain struct {
 	Chain               []*Block
@@ -30,6 +34,18 @@ func (b *Blockchain) NewTransaction(sender, recipient string, amount int) int {
 // LastBlock Returns the last Block in the chain
 func (b *Blockchain) LastBlock() *Block {
 	return b.Chain[len(b.Chain)-1]
+}
+
+// Hash creates a SHA-256 hash of a block
+func Hash(block Block) []byte {
+	blockString, err := json.Marshal(block)
+	if err != nil {
+		return []byte{}
+	}
+
+	binarySha256 := sha256.Sum256(blockString)
+
+	return binarySha256[:]
 }
 
 type Block struct {

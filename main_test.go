@@ -238,3 +238,33 @@ func TestBlockchain_NewTransaction(t *testing.T) {
 		})
 	}
 }
+
+func TestHash(t *testing.T) {
+	type args struct {
+		block Block
+	}
+	tests := []struct {
+		name string
+		args args
+		want []byte
+	}{
+		{
+			name: "success, when block is nil",
+			args: args{block: Block{
+				Index:        0,
+				Timestamp:    0,
+				Transactions: nil,
+				Proof:        0,
+				PreviousHash: "",
+			}},
+			want: []byte{49, 152, 133, 160, 103, 111, 24, 28, 104, 155, 146, 98, 31, 211, 70, 192, 119, 130, 105, 216, 54, 41, 249, 238, 41, 32, 11, 199, 247, 122, 146, 107},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Hash(tt.args.block); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Hash() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
