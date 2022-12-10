@@ -17,7 +17,7 @@ func TestBlockchain_LastBlock(t *testing.T) {
 		want   *Block
 	}{
 		{
-			name: "success",
+			name: "only 1 block: success",
 			fields: fields{
 				Chain: []*Block{
 					{
@@ -34,6 +34,40 @@ func TestBlockchain_LastBlock(t *testing.T) {
 				Index:        1,
 				Timestamp:    time.Now().Unix(), // TODO: this test needs fixing
 				Transactions: nil,
+				Proof:        1,
+				PreviousHash: "exampleHash",
+			},
+		},
+		{
+			name: "only 1 block: success",
+			fields: fields{
+				Chain: []*Block{
+					{
+						Index:     1,
+						Timestamp: time.Now().Unix(), // TODO: this test needs fixing
+						Transactions: []*Transaction{
+							{
+								Sender:    "exampleSender",
+								Recipient: "exampleRecipient",
+								Amount:    100,
+							},
+						},
+						Proof:        1,
+						PreviousHash: "exampleHash",
+					},
+				},
+				CurrentTransactions: nil,
+			},
+			want: &Block{
+				Index:     1,
+				Timestamp: time.Now().Unix(), // TODO: this test needs fixing
+				Transactions: []*Transaction{
+					{
+						Sender:    "exampleSender",
+						Recipient: "exampleRecipient",
+						Amount:    100,
+					},
+				},
 				Proof:        1,
 				PreviousHash: "exampleHash",
 			},
@@ -106,6 +140,36 @@ func TestBlockchain_NewBlock(t *testing.T) {
 				Index:        2,
 				Timestamp:    time.Now().Unix(), // TODO: this test needs fixing
 				Transactions: nil,
+				Proof:        1,
+				PreviousHash: "exampleHash",
+			},
+		},
+		{
+			name: "Creating first block with transactions: success",
+			fields: fields{
+				Chain: nil,
+				CurrentTransactions: []*Transaction{
+					{
+						Sender:    "exampleSender",
+						Recipient: "exampleRecipient",
+						Amount:    100,
+					},
+				},
+			},
+			args: args{
+				proof:        1,
+				previousHash: "exampleHash",
+			},
+			want: &Block{
+				Index:     1,
+				Timestamp: time.Now().Unix(), // TODO: this test needs fixing
+				Transactions: []*Transaction{
+					{
+						Sender:    "exampleSender",
+						Recipient: "exampleRecipient",
+						Amount:    100,
+					},
+				},
 				Proof:        1,
 				PreviousHash: "exampleHash",
 			},
