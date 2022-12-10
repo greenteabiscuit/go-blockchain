@@ -308,7 +308,12 @@ func TestBlockchain_ValidChain(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := successBlockChain.ValidChain(successBlockChain.Chain); got != tt.want {
+			b := &Blockchain{
+				Chain:               tt.fields.Chain,
+				CurrentTransactions: tt.fields.CurrentTransactions,
+				Nodes:               tt.fields.Nodes,
+			}
+			if got := b.ValidChain(tt.args.chain); got != tt.want {
 				t.Errorf("ValidChain() = %v, want %v", got, tt.want)
 			}
 		})
