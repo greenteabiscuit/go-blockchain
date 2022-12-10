@@ -5,12 +5,29 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"time"
 )
 
 type Blockchain struct {
 	Chain               []*Block
 	CurrentTransactions []*Transaction
+}
+
+func NewBlockchain() *Blockchain {
+	return &Blockchain{
+		Chain: []*Block{
+			{
+				Index:        0,
+				Timestamp:    0,
+				Transactions: nil,
+				Proof:        100,
+				PreviousHash: "1",
+			},
+		},
+		CurrentTransactions: nil,
+	}
 }
 
 // NewBlock Adds a new block and adds it to the chain
@@ -83,4 +100,34 @@ type Transaction struct {
 	Sender    string
 	Recipient string
 	Amount    int
+}
+
+func (b *Blockchain) MineHandlerHandler(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (b *Blockchain) NewTransactionHandler(w http.ResponseWriter, r *http.Request) {
+	var transaction Transaction
+	data, error := io.ReadAll(r.Body)
+	if error != nil {
+		return
+	}
+	json.Unmarshal(data, &transaction)
+	if transaction.Sender == "" || transaction.Recipient == "" {
+		w.Write([]byte("field missing"))
+	}
+	index := b.NewTransaction(transaction.Sender, transaction.Recipient, transaction.Amount)
+	w.Write([]byte(fmt.Sprintf("added transaction to Block %d\n", index)))
+}
+
+func (b *Blockchain) FullChainHandler(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func main() {
+	blockChain := NewBlockchain()
+	http.HandleFunc("/mine", blockChain.MineHandlerHandler)
+	http.HandleFunc("/transactions/new", blockChain.NewTransactionHandler)
+	http.HandleFunc("/chain", blockChain.FullChainHandler)
+	http.ListenAndServe(":8080", nil)
 }
