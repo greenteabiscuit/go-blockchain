@@ -64,6 +64,31 @@ func TestBlockchain_NewBlock(t *testing.T) {
 				PreviousHash: "exampleHash",
 			},
 		},
+		{
+			name: "Creating second block: success",
+			fields: fields{
+				Chain: []*Block{
+					{
+						Index:        1,
+						Timestamp:    time.Now().Unix(), // TODO: this test needs fixing
+						Transactions: nil,
+						Proof:        1,
+						PreviousHash: "exampleHash",
+					},
+				},
+				CurrentTransactions: nil,
+			}, args: args{
+				proof:        1,
+				previousHash: "exampleHash",
+			},
+			want: &Block{
+				Index:        2,
+				Timestamp:    time.Now().Unix(), // TODO: this test needs fixing
+				Transactions: nil,
+				Proof:        1,
+				PreviousHash: "exampleHash",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
