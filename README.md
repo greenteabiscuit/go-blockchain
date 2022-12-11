@@ -1,5 +1,17 @@
 # go-blockchain
 
+This repository is based on the article
+[Learn Blockchains by Building One](https://hackernoon.com/learn-blockchains-by-building-one-117428612f46).
+I basically used golang to reimplement the contents of the article.
+
+You can create a multi-node blockchain using the code
+and can understand
+- how transactions are added to the block
+- how blocks are added to the chain
+- how nodes communicate with each other to resolve conflict and reach consensus
+
+## Basics
+
 To run multiple nodes:
 
 ```shell
@@ -19,7 +31,7 @@ $ curl localhost:8080/nodes/register -d \
 $ curl localhost:8080/nodes/resolve
 ```
 
-## Simulating the code.
+## Simulating the code
 
 Run multiple nodes
 
